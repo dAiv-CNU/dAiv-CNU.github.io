@@ -180,8 +180,6 @@ def submit_prompt(url):
             traceback.print_exc()
     return wrapped
 
-document['create_image'].bind('click', submit_prompt())
-
 
 ########################################################################################################################
 # Leaderboard settings
@@ -268,15 +266,33 @@ def submit_leaderboard(url, team_list):
                 form_data = window.FormData.new()
                 form_data.append("csv_file", file, file.name)
 
-                result = await window.fetch(url + team_name, {
-                    'method': "POST",
-                    'headers': {
-                        'Authorization': f"Bearer {__WEB_CLIENT_TOKEN}",
-                        'username': base64.b64encode(team_name.encode('utf-8')).decode('utf-8'),
-                        'password': base64.b64encode(pass_word.encode('utf-8')).decode('utf-8')
-                    },
-                    'body': form_data
-                })
+                select_num = document.getElementById('target_select')
+
+                if select_num:
+                    select_num_submit = select_num.value
+                    print(select_num_submit)
+                    result = await window.fetch(url + team_name, {
+                        'method': "POST",
+                        'headers': {
+                            'Authorization': f"Bearer {__WEB_CLIENT_TOKEN}",
+                            'username': base64.b64encode(team_name.encode('utf-8')).decode('utf-8'),
+                            'password': base64.b64encode(pass_word.encode('utf-8')).decode('utf-8'),
+                            'target' : base64.b64encode(select_num_submit.encode('utf-8')).decode('utf-8'),
+                        },
+                        'body': form_data
+                    })
+                else:
+                    result = await window.fetch(url + team_name, {
+                        'method': "POST",
+                        'headers': {
+                            'Authorization': f"Bearer {__WEB_CLIENT_TOKEN}",
+                            'username': base64.b64encode(team_name.encode('utf-8')).decode('utf-8'),
+                            'password': base64.b64encode(pass_word.encode('utf-8')).decode('utf-8')
+                        },
+                        'body': form_data
+                    })
+
+
 
                 if result.status == 200:
                     fetched = await result.json()
@@ -311,6 +327,7 @@ def submit_leaderboard(url, team_list):
 username_messages = lambda u: f"{int(u.value)+1}번째 팀을 선택하셨습니다.", lambda u: "팀 이름이 올바르지 않습니다."
 password_messages = lambda p: "Looks good!" if p.value else (_ for _ in ()).throw(ValueError), lambda p: "비밀번호는 비어있을 수 없습니다."
 file_input_messages = lambda f: f"{f.value}를 제출합니다." if f.value else (_ for _ in ()).throw(ValueError), lambda f: "제출할 파일이 선택되지 않았습니다."
+target_messages = lambda t: f"{t.value}번째 타겟을 선택하셨습니다." if t.value else (_ for _ in ()).throw(ValueError), lambda t: "타겟이 선택되지 않았습니다."
 
 async def fetch_score_async(event):
     print("get score")
@@ -347,6 +364,46 @@ async def fetch_score_async(event):
 def get_score_handler(event):
     event.preventDefault()
     aio.run(fetch_score_async(event))
+
+
+def prompt_submit(event):
+    print("prompt_submit called")
+
+    async def submit():
+        prompt_form = document['prompt_image_container']
+        if prompt_form:
+            prompt_text_area = document['create_prompt']
+
+            prompt_text = prompt_text_area.value
+
+            result = await window.fetch(prompt_form.action, {
+                'method': "POST",
+                'headers': {
+                    'prompt': base64.b64encode(prompt_text.encode('utf-8')).decode('utf-8'),
+                }
+            })
+
+            if result.ok:
+                fetched = json.loads(await result.text())
+
+                mime_type = fetched['mime_type']
+                image_data = fetched['image_data']
+                image_url = f"data:{mime_type};base64,{image_data}"
+
+                file_path = fetched['file_path']
+                prompt_text_area.value = file_path
+
+                image_element = document['generatedimage']
+                image_element.src = image_url
+                image_element.style.display = "block"
+
+                placeholder = document['imageplaceholder']
+                placeholder.style.display = "none"
+
+            else:
+                window.alert("이미지 생성에 실패했습니다.")
+
+    aio.run(submit())
 
 async def set_leaderboard_data():
     dataset = dict(teams=[], values=dict())  # prevent garbage collection
@@ -434,12 +491,16 @@ async def set_leaderboard_data():
         _, start, end, _ = parse_timeline_data()
         print(f"Leaderboard available from {start} to {end}.")
 
-        prompt_container = document.getElementById('imageprompt')
+        prompt_container = document.getElementById('image_prompt')
 
         if prompt_container and start <= datetime.now().date() <= end:
             prompt_container.classList.remove('d-none')
 
             search_form = document.getElementById('searchForm')
+            prompt_btn = document.getElementById('create_image_btn')
+
+            prompt_btn.bind('click', prompt_submit)
+            print("prompt_btn binded")
 
             search_form.bind("submit",get_score_handler)
 
@@ -464,6 +525,10 @@ async def set_leaderboard_data():
                 team_selections.appendChild(option)
 
             form.onsubmit = submit_leaderboard(url=url, team_list=team_list)
+            target = document.getElementById('target_select')
+            validation = document.getElementById('leaderboard_form_target_validation')
+            if target and validation:
+                target.bind('change', watch_form(target, validation, target_messages))
             username = document.getElementById('leaderboard_form_username')
             validation = document.getElementById('leaderboard_form_username_validation')
             if username and validation:

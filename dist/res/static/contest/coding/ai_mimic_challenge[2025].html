@@ -171,7 +171,7 @@
     </div>
 </section>
 
-<section id="imageprompt" class="imageprompt d-none" style="background: #fafafa; box-shadow: 0px 20px 50px rgba(74, 94, 121, 0.2) inset;">
+<section id="image_prompt" class="imageprompt d-none" style="background: #fafafa; box-shadow: 0px 20px 50px rgba(74, 94, 121, 0.2) inset;">
     <div class="container py-4" data-aos="fade-up">
         <br>
         <div class="row g-2">
@@ -179,14 +179,15 @@
                 <div class="py-1 ps-4">
                     <h5>이미지 생성 프롬프트</h5>
                 </div>
-                <div class="prompt_container">
+                <form class="prompt_container" id="prompt_image_container" action="http://daivserver.duckdns.org:20261/prompt">
                     <div class="row g-1">
                         <div class="col-8">
                             <textarea id="create_prompt"
                                       class="form-control"
                                       rows="12"
+                                      placeholder="여기에 작성해주세요"
                                       style="background-color: transparent; border: 1px solid rgba(107, 114, 128, 0.25); border-radius: 6px; box-shadow: 0 4px 12px rgba(107, 114, 128, 0.15);"></textarea>
-                            <button type = "button" id="create_image" class="btn btn-primary mt-3 w-100" >이미지 결과</button>
+                            <button type = "button" id="create_image_btn" class="btn btn-primary mt-3 w-100" >이미지 결과</button>
                         </div>
                         <div class="col-4">
                             <div class="generated-image-container mx-3"
@@ -203,7 +204,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </form>
             </div>
             <div class="score-checking-container col-2">
                 <div class="py-1" style="text-align: center">
@@ -244,7 +245,7 @@
     </div>
 </section>
 
-<section id="leaderboard" class="leaderboard d-none">
+<section id="leaderboard" class="leaderboard">
     <div class="container py-4" data-aos="fade-up">
         <br>
         <div class="dashboard mt-3">
@@ -270,9 +271,9 @@
         <div id="btn_leaderboard" class="btn btn-warning btn-leaderboard cursor-hover-item mt-2"
              data-cursor-text="LEADERBOARD!" data-cursor-text-repeat="3">리더보드 열기</div>
         <div class="my-3 pb-4">
-            <div id="leaderboard_form_container" class="d-none mt-4">
+            <div id="leaderboard_form_container" class="mt-4">
                 <h5 class="leaderboard-form-title">리더보드 제출</h5>
-                <form id="leaderboard_form"  class="row row-cols-lg-auto g-3 align-items-center" action="http://daivserver.duckdns.org:20661/leaderboard">
+                <form id="leaderboard_form"  class="row row-cols-lg-auto g-3 align-items-center" action="http://daivserver.duckdns.org:20261/leaderboard">
                     <div class="col-lg-3 col-md-6 col-sm-6 col-12">
                         <label class="visually-hidden" for="leaderboard_form_username">Username</label>
                         <div class="input-group has-validation">
@@ -294,7 +295,7 @@
                     </div>
                     <div class="col-lg-2 col-md-6 col-sm-6 col-12">
                         <label class="visually-hidden" for="target_select">타겟 번호 선택</label>
-                        <select class="form-select is-invalid" id="target_select" aria-describedby="leaderboard_form_username_validation" required>
+                        <select class="form-select is-invalid" id="target_select" aria-describedby="leaderboard_form_target_validation" required>
                             <option value="">타겟 번호 선택</option>
                             <option value="1">1</option>
                             <option value="2">2</option>
@@ -307,7 +308,7 @@
                             <option value="9">9</option>
                             <option value="10">10</option>
                         </select>
-                        <div id="targer_select_validation" class="invalid-feedback">
+                        <div id="leaderboard_form_target_validation" class="invalid-feedback">
                             타켓 번호를 선택해주세요.
                         </div>
                     </div>
