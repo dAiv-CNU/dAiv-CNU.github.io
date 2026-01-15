@@ -84,8 +84,8 @@
                                 <i>(단, 팀원 중 다이브 소속 회원이 한 명 이상 있어야 함)</i>
                                 <li>참가 인원: 20팀(40명) 내외</li>
                                 <li id="application_period">신청 기간: 2025년 9월 12일 (금요일) ~ 2025년 9월 23일 (화요일)</li>
-                                <li id="contest_period">개별 대회 준비: 2025년 9월 24일 (수요일) ~ 2025년 9월 29일 (월요일)</li>
-                                <li id="result_announcement">대회 진행: 2025년 9월 30일 (화요일) 19:00 ~ 21:00</li>
+                                <li id="contest_period">개별 대회 준비: 2025년 9월 24일 (수요일) ~ 2025년 9월 30일 (월요일)</li>
+                                <li id="result_announcement">대회 진행: 2025년 10월 1일 (화요일) 19:00 ~ 21:00</li>
                             </ul>
                         </div>
 
@@ -171,7 +171,7 @@
     </div>
 </section>
 
-<section id="image_prompt" class="imageprompt d-none" style="background: #fafafa; box-shadow: 0px 20px 50px rgba(74, 94, 121, 0.2) inset;">
+<section id="image_prompt" class="imageprompt" style="background: #fafafa; box-shadow: 0px 20px 50px rgba(74, 94, 121, 0.2) inset;">
     <div class="container py-4" data-aos="fade-up">
         <br>
         <div class="row g-2">
@@ -179,7 +179,7 @@
                 <div class="py-1 ps-4">
                     <h5>이미지 생성 프롬프트</h5>
                 </div>
-                <form class="prompt_container" id="prompt_image_container" action="http://daivserver.duckdns.org:20261/prompt">
+                <form class="prompt_container" id="prompt_image_container" action="http://127.0.0.1:8000/prompt">
                     <div class="row g-1">
                         <div class="col-8">
                             <textarea id="create_prompt"
@@ -254,13 +254,11 @@
             </div>
             <div class="chart-wrapper">
                 <div id="leaderboard_chart" class="mx-0 mx-sm-2"> {
-                        "teams": [],
-                        "values": {
-                            "1차 제출": [],
-                            "2차 제출": [],
-                            "최종 제출": [],
-                            "합계": []
-                        }
+                    "teams": [],
+                    "values": {
+                    "1차 제출": [],
+                    "최종 제출": []
+                    }
                     }
                 </div>
             </div>
@@ -273,7 +271,7 @@
         <div class="my-3 pb-4">
             <div id="leaderboard_form_container" class="mt-4">
                 <h5 class="leaderboard-form-title">리더보드 제출</h5>
-                <form id="leaderboard_form"  class="row row-cols-lg-auto g-3 align-items-center" action="http://daivserver.duckdns.org:20261/leaderboard">
+                <form id="leaderboard_form"  class="row row-cols-lg-auto g-3 align-items-center" action="http://daivserver.duckdns.org:20661/contest/mimic_challenge[2025]/leaderboard">
                     <div class="col-lg-3 col-md-6 col-sm-6 col-12">
                         <label class="visually-hidden" for="leaderboard_form_username">Username</label>
                         <div class="input-group has-validation">

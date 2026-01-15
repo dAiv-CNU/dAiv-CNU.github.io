@@ -97,9 +97,9 @@ async def set_iframe():
                 .replace("//t1.daumcdn.net/kas/static/ba.min.js", "")
                 .replace("Kakao.init('4cca00b63eedb801abfc9952db0ee7a3');", "")
                 .replace("<head>", "<head>"
-                                    "<base href=\"https://pushoong.com/\">"
-                                    "<link href=\""+window.location.origin+"/dist/res/css/font.css\" rel=\"stylesheet\">"
-                                    "<style>.increase_max_width {max-width: 1000px !important;}</style>")
+                                   "<base href=\"https://pushoong.com/\">"
+                                   "<link href=\""+window.location.origin+"/dist/res/css/font.css\" rel=\"stylesheet\">"
+                                                                          "<style>.increase_max_width {max-width: 1000px !important;}</style>")
                 .replace("<body>", "<body style=\"background-color: #fff;\">")
                 .replace("<div class=\"container\">", "<div class=\"container\" style=\"background-color: #fff;\">")
                 .replace("<div id=\"fullscreen-overlay\">", "<div id=\"fullscreen-overlay-disabled\" style=\"display:none;\">")
@@ -155,14 +155,14 @@ def submit_prompt(url):
 
                     if result.status == 200:
                         image_blob = await result.blob()
-                        
+
                         img_tag = document.createElement('img')
                         img_tag.src = window.URL.createObjectURL(image_blob)
                         img_tag.alt = "Generated Image"
                         img_tag.classList.add('img-fluid', 'mt-3')
 
                         if image_display_area:
-                            image_display_area.innerHTML = '' 
+                            image_display_area.innerHTML = ''
                             image_display_area.appendChild(img_tag)
 
                     else:
@@ -264,24 +264,25 @@ def submit_leaderboard(url, team_list):
             async def submit():
                 file = file_input.files[0]
                 form_data = window.FormData.new()
-                form_data.append("csv_file", file, file.name)
+
 
                 select_num = document.getElementById('target_select')
 
                 if select_num:
+                    form_data.append("img_file", file, file.name)
                     select_num_submit = select_num.value
                     print(select_num_submit)
-                    result = await window.fetch(url + team_name, {
+                    result = await window.fetch(url + select_num_submit, {
                         'method': "POST",
                         'headers': {
                             'Authorization': f"Bearer {__WEB_CLIENT_TOKEN}",
                             'username': base64.b64encode(team_name.encode('utf-8')).decode('utf-8'),
-                            'password': base64.b64encode(pass_word.encode('utf-8')).decode('utf-8'),
-                            'target' : base64.b64encode(select_num_submit.encode('utf-8')).decode('utf-8'),
+                            'password': base64.b64encode(pass_word.encode('utf-8')).decode('utf-8')
                         },
                         'body': form_data
                     })
                 else:
+                    form_data.append("csv_file", file, file.name)
                     result = await window.fetch(url + team_name, {
                         'method': "POST",
                         'headers': {
@@ -330,14 +331,20 @@ file_input_messages = lambda f: f"{f.value}를 제출합니다." if f.value else
 target_messages = lambda t: f"{t.value}번째 타겟을 선택하셨습니다." if t.value else (_ for _ in ()).throw(ValueError), lambda t: "타겟이 선택되지 않았습니다."
 
 async def fetch_score_async(event):
+    event.preventDefault()
     print("get score")
+
+    score_container = document.getElementById('resultCard')
+    image_container = document.getElementById('initialState')
+    score_container.classList.remove('d-none')
+    image_container.classList.add('d-none')
 
     team_name_text = document.getElementById('teamSearch')
     team_name = document.getElementById('teamName')
 
     team_name.text = team_name_text.value
 
-    url = "http://daivserver.duckdns.org:20261/leaderboard/" + f"{team_name_text.value}"
+    url = "http://daivserver.duckdns.org:20661/contest/mimic_challenge%b2025%d/leaderboard/" + f"{team_name_text.value}"
 
     result = await window.fetch(url , {
         'method': "GET",
@@ -363,6 +370,9 @@ async def fetch_score_async(event):
 
 def get_score_handler(event):
     event.preventDefault()
+
+    Blind_card = document.getElementById('resultCard')
+
     aio.run(fetch_score_async(event))
 
 
@@ -387,11 +397,8 @@ def prompt_submit(event):
                 fetched = json.loads(await result.text())
 
                 mime_type = fetched['mime_type']
-                image_data = fetched['image_data']
+                image_data = fetched['base64_image']
                 image_url = f"data:{mime_type};base64,{image_data}"
-
-                file_path = fetched['file_path']
-                prompt_text_area.value = file_path
 
                 image_element = document['generatedimage']
                 image_element.src = image_url
