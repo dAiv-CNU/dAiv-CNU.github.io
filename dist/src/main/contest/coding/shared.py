@@ -37,9 +37,10 @@ window.AOS.init()
 # Timeline Animation
 ########################################################################################################################
 try:
-    window.ApexCharts.new(document.querySelector("#timeline_radial_bar_chart"),
-                          build_timeline_chart(parse_timeline_data())
-                          ).render()
+    window.ApexCharts.new(
+        document.querySelector("#timeline_radial_bar_chart"),
+        build_timeline_chart(parse_timeline_data())
+    ).render()
 except Exception as _:
     traceback.print_exc()
 
@@ -97,9 +98,9 @@ async def set_iframe():
                 .replace("//t1.daumcdn.net/kas/static/ba.min.js", "")
                 .replace("Kakao.init('4cca00b63eedb801abfc9952db0ee7a3');", "")
                 .replace("<head>", "<head>"
-                                   "<base href=\"https://pushoong.com/\">"
-                                   "<link href=\""+window.location.origin+"/dist/res/css/font.css\" rel=\"stylesheet\">"
-                                                                          "<style>.increase_max_width {max-width: 1000px !important;}</style>")
+                                    "<base href=\"https://pushoong.com/\">"
+                                    "<link href=\""+window.location.origin+"/dist/res/css/font.css\" rel=\"stylesheet\">"
+                                    "<style>.increase_max_width {max-width: 1000px !important;}</style>")
                 .replace("<body>", "<body style=\"background-color: #fff;\">")
                 .replace("<div class=\"container\">", "<div class=\"container\" style=\"background-color: #fff;\">")
                 .replace("<div id=\"fullscreen-overlay\">", "<div id=\"fullscreen-overlay-disabled\" style=\"display:none;\">")
@@ -127,58 +128,6 @@ async def set_iframe():
                 break
 
 aio.run(set_iframe())
-
-
-########################################################################################################################
-# prompt
-########################################################################################################################
-def submit_prompt(url):
-    def wrapped(e):
-        e.preventDefault()
-
-        prompt = document.getElementById('create_prompt')
-        image_display_area = document.getElementById('generatedimage')
-
-        try:
-            async def Submit():
-                form_data = window.FormData.new()
-                form_data.append("prompt", prompt.value)
-
-                try:
-                    result = await window.fetch(url, {
-                        'method': "POST",
-                        'headers': {
-                            'Accept': 'image/png'
-                        },
-                        'body': form_data
-                    })
-
-                    if result.status == 200:
-                        image_blob = await result.blob()
-
-                        img_tag = document.createElement('img')
-                        img_tag.src = window.URL.createObjectURL(image_blob)
-                        img_tag.alt = "Generated Image"
-                        img_tag.classList.add('img-fluid', 'mt-3')
-
-                        if image_display_area:
-                            image_display_area.innerHTML = ''
-                            image_display_area.appendChild(img_tag)
-
-                    else:
-                        if image_display_area:
-                            image_display_area.innerHTML = '<div class="alert alert-danger" role="alert">이미지 생성 실패!</div>'
-
-                except Exception as _:
-                    if image_display_area:
-                        image_display_area.innerHTML = '<div class="alert alert-danger" role="alert">이미지 로드 중 오류 발생!</div>'
-                    traceback.print_exc()
-
-            aio.run(Submit())
-
-        except Exception as _:
-            traceback.print_exc()
-    return wrapped
 
 
 ########################################################################################################################
@@ -264,36 +213,17 @@ def submit_leaderboard(url, team_list):
             async def submit():
                 file = file_input.files[0]
                 form_data = window.FormData.new()
+                form_data.append("csv_file", file, file.name)
 
-
-                select_num = document.getElementById('target_select')
-
-                if select_num:
-                    form_data.append("img_file", file, file.name)
-                    select_num_submit = select_num.value
-                    print(select_num_submit)
-                    result = await window.fetch(url + select_num_submit, {
-                        'method': "POST",
-                        'headers': {
-                            'Authorization': f"Bearer {__WEB_CLIENT_TOKEN}",
-                            'username': base64.b64encode(team_name.encode('utf-8')).decode('utf-8'),
-                            'password': base64.b64encode(pass_word.encode('utf-8')).decode('utf-8')
-                        },
-                        'body': form_data
-                    })
-                else:
-                    form_data.append("csv_file", file, file.name)
-                    result = await window.fetch(url + team_name, {
-                        'method': "POST",
-                        'headers': {
-                            'Authorization': f"Bearer {__WEB_CLIENT_TOKEN}",
-                            'username': base64.b64encode(team_name.encode('utf-8')).decode('utf-8'),
-                            'password': base64.b64encode(pass_word.encode('utf-8')).decode('utf-8')
-                        },
-                        'body': form_data
-                    })
-
-
+                result = await window.fetch(url + team_name, {
+                    'method': "POST",
+                    'headers': {
+                        'Authorization': f"Bearer {__WEB_CLIENT_TOKEN}",
+                        'username': base64.b64encode(team_name.encode('utf-8')).decode('utf-8'),
+                        'password': base64.b64encode(pass_word.encode('utf-8')).decode('utf-8')
+                    },
+                    'body': form_data
+                })
 
                 if result.status == 200:
                     fetched = await result.json()
@@ -328,89 +258,7 @@ def submit_leaderboard(url, team_list):
 username_messages = lambda u: f"{int(u.value)+1}번째 팀을 선택하셨습니다.", lambda u: "팀 이름이 올바르지 않습니다."
 password_messages = lambda p: "Looks good!" if p.value else (_ for _ in ()).throw(ValueError), lambda p: "비밀번호는 비어있을 수 없습니다."
 file_input_messages = lambda f: f"{f.value}를 제출합니다." if f.value else (_ for _ in ()).throw(ValueError), lambda f: "제출할 파일이 선택되지 않았습니다."
-target_messages = lambda t: f"{t.value}번째 타겟을 선택하셨습니다." if t.value else (_ for _ in ()).throw(ValueError), lambda t: "타겟이 선택되지 않았습니다."
 
-async def fetch_score_async(event):
-    event.preventDefault()
-    print("get score")
-
-    score_container = document.getElementById('resultCard')
-    image_container = document.getElementById('initialState')
-    score_container.classList.remove('d-none')
-    image_container.classList.add('d-none')
-
-    team_name_text = document.getElementById('teamSearch')
-    team_name = document.getElementById('teamName')
-
-    team_name.text = team_name_text.value
-
-    url = "http://daivserver.duckdns.org:20661/contest/mimic_challenge%b2025%d/leaderboard/" + f"{team_name_text.value}"
-
-    result = await window.fetch(url , {
-        'method': "GET",
-        'headers': {
-            'Authorization': f"Bearer {__WEB_CLIENT_TOKEN}"
-        }
-    })
-
-    if result.ok:
-        data = await result.json()
-
-        score_text = document.getElementById('teamScore')
-        rank_badge_text = document.getElementById('rankBadge')
-
-        score_text.text = data["score"]
-        rank_badge_text.text = data["rank"]
-
-    else:
-        score_text = document.getElementById('teamScore')
-        score_text.text = "팀 없음"
-
-
-
-def get_score_handler(event):
-    event.preventDefault()
-
-    Blind_card = document.getElementById('resultCard')
-
-    aio.run(fetch_score_async(event))
-
-
-def prompt_submit(event):
-    print("prompt_submit called")
-
-    async def submit():
-        prompt_form = document['prompt_image_container']
-        if prompt_form:
-            prompt_text_area = document['create_prompt']
-
-            prompt_text = prompt_text_area.value
-
-            result = await window.fetch(prompt_form.action, {
-                'method': "POST",
-                'headers': {
-                    'prompt': base64.b64encode(prompt_text.encode('utf-8')).decode('utf-8'),
-                }
-            })
-
-            if result.ok:
-                fetched = json.loads(await result.text())
-
-                mime_type = fetched['mime_type']
-                image_data = fetched['base64_image']
-                image_url = f"data:{mime_type};base64,{image_data}"
-
-                image_element = document['generatedimage']
-                image_element.src = image_url
-                image_element.style.display = "block"
-
-                placeholder = document['imageplaceholder']
-                placeholder.style.display = "none"
-
-            else:
-                window.alert("이미지 생성에 실패했습니다.")
-
-    aio.run(submit())
 
 async def set_leaderboard_data():
     dataset = dict(teams=[], values=dict())  # prevent garbage collection
@@ -495,27 +343,9 @@ async def set_leaderboard_data():
             if force_open_hider:
                 opener.click()
 
-        _, start, end, _ = parse_timeline_data()
-        print(f"Leaderboard available from {start} to {end}.")
-
-        prompt_container = document.getElementById('image_prompt')
-
-        if prompt_container and start <= datetime.now().date() <= end:
-            prompt_container.classList.remove('d-none')
-
-            search_form = document.getElementById('searchForm')
-            prompt_btn = document.getElementById('create_image_btn')
-
-            prompt_btn.bind('click', prompt_submit)
-            print("prompt_btn binded")
-
-            search_form.bind("submit",get_score_handler)
-
-
-
         # set the leaderboard submission form
         form_container = document.getElementById('leaderboard_form_container')
-
+        _, start, end, _ = parse_timeline_data()
         if form_container and start <= datetime.now().date() <= end:
             form_container.classList.remove('d-none')
             form = document.getElementById('leaderboard_form')
@@ -532,10 +362,6 @@ async def set_leaderboard_data():
                 team_selections.appendChild(option)
 
             form.onsubmit = submit_leaderboard(url=url, team_list=team_list)
-            target = document.getElementById('target_select')
-            validation = document.getElementById('leaderboard_form_target_validation')
-            if target and validation:
-                target.bind('change', watch_form(target, validation, target_messages))
             username = document.getElementById('leaderboard_form_username')
             validation = document.getElementById('leaderboard_form_username_validation')
             if username and validation:
