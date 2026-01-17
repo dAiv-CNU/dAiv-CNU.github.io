@@ -37,9 +37,10 @@ window.AOS.init()
 # Timeline Animation
 ########################################################################################################################
 try:
-    window.ApexCharts.new(document.querySelector("#timeline_radial_bar_chart"),
-                          build_timeline_chart(parse_timeline_data())
-                          ).render()
+    window.ApexCharts.new(
+        document.querySelector("#timeline_radial_bar_chart"),
+        build_timeline_chart(parse_timeline_data())
+    ).render()
 except Exception as _:
     traceback.print_exc()
 
