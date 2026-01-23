@@ -11,8 +11,11 @@ window.AOS.init()
 ########################################################################################################################
 # Programs List
 ########################################################################################################################
-def enable_isotope():
-    programs_container = document.getElementById('programs_container')
+def enable_isotope(selected_container=None):
+    if selected_container:
+        programs_container = selected_container
+    else:
+        programs_container = document.getElementById('programs_container')
     if programs_container:
         window.programs_isotope = window.Isotope.new(programs_container, {
             'itemSelector': ".programs-item",
@@ -22,7 +25,7 @@ def enable_isotope():
 
 
 def flag_selected_tag(selected):
-    for li in document.getElementById('programs_filter').getElementsByClassName('filter-active'):
+    for li in selected.parentNode.getElementsByClassName('filter-active'):
         li.classList.remove('filter-active')
     selected.classList.add('filter-active')
 
@@ -33,18 +36,28 @@ def change_filter(event):
     window.programs_isotope.arrange({'filter': filter_value})
     window.programs_isotope.on('arrangeComplete', lambda _: window.AOS.refresh())
     if 'program-type' in event.currentTarget.classList:
-        for fil in programs_filter:
-            if filter_value == fil.attributes['data-filter'].nodeValue:
-                flag_selected_tag(fil)
-                break
+        current_container = window.programs_isotope.element
+        programs_filter_elem = current_container.parentNode.querySelector('#programs_filter')
+        if programs_filter_elem:
+            programs_filter = programs_filter_elem.children
+            for fil in programs_filter:
+                if filter_value == fil.attributes['data-filter'].nodeValue:
+                    flag_selected_tag(fil)
+                    break
     else:
         flag_selected_tag(event.currentTarget)
 
 
-def setup_programs_filter():
-    enable_isotope()
-    programs_filter = document.getElementById('programs_filter').children
-    for el in programs_filter + list(document.getElementsByClassName('program-type')):
+def setup_programs_filter(selected_container=None):
+    enable_isotope(selected_container)
+    if selected_container:
+        programs_filter_elem = selected_container.parentNode.querySelector('#programs_filter')
+    else:
+        programs_filter_elem = document.getElementById('programs_filter')
+    if programs_filter_elem:
+        for el in programs_filter_elem.children:
+            el.onclick = change_filter
+    for el in document.getElementsByClassName('program-type'):
         el.onclick = change_filter
 
 
@@ -62,11 +75,19 @@ def change_year_visibility(e):
         if not el.classList.contains('d-none'):
             el.classList.add('d-none')
     document.getElementById(f'{data_type}_'+str(year)).classList.remove('d-none')
+    if data_type == "programs":
+        container_elem = document[f"{data_type}_{year}"]
+        programs_filter = container_elem.querySelector('#programs_filter')
+        programs_container = container_elem.querySelector('#programs_container')
+        if programs_filter:
+            programs_filter.classList.remove('d-none')
+        if programs_container:
+            programs_container.classList.remove('d-none')
     adjust_selector_visibility(year, data_type)
     window.AOS.init()
     window.AOS.refresh()
     if data_type == "programs":
-        setup_programs_filter()
+        setup_programs_filter(programs_container)
 
 
 def flip_year_visibility(e):
@@ -262,7 +283,7 @@ if programs:
                     window.AOS.refresh()
                     setup_programs_filter()
 
-            #register_selector(selector_container, year, "programs", idx < 3, exists, active)
+            register_selector(selector_container, year, "programs", idx < 3, exists, active)
             #TODO: Fix the selector visibility
 
     aio.run(add_programs_history())
