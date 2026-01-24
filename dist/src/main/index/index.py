@@ -30,7 +30,7 @@ def enable_isotope():
 
 
 def flag_selected_tag(selected):
-    for li in document.getElementById('programs_filter').getElementsByClassName('filter-active'):
+    for li in selected.parentNode.getElementsByClassName('filter-active'):
         li.classList.remove('filter-active')
     selected.classList.add('filter-active')
 
@@ -41,10 +41,14 @@ def change_filter(event):
     window.programs_isotope.arrange({'filter': filter_value})
     window.programs_isotope.on('arrangeComplete', lambda _: window.AOS.refresh())
     if 'program-type' in event.currentTarget.classList:
-        for fil in programs_filter:
-            if filter_value == fil.attributes['data-filter'].nodeValue:
-                flag_selected_tag(fil)
-                break
+        current_container = window.programs_isotope.element
+        programs_filter_elem = current_container.parentNode.querySelector('#programs_filter')
+        if programs_filter_elem:
+            programs_filter = programs_filter_elem.children
+            for fil in programs_filter:
+                if filter_value == fil.attributes['data-filter'].nodeValue:
+                    flag_selected_tag(fil)
+                    break
     else:
         flag_selected_tag(event.currentTarget)
 
