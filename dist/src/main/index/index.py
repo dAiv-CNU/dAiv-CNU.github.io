@@ -65,7 +65,7 @@ def setup_programs_filter():
 ########################################################################################################################
 # Set Datas by Year
 ########################################################################################################################
-from common.main import current_year, insert_element
+from common.main import current_year, insert_element, scroll_to
 
 
 def change_year_visibility(e):
@@ -209,6 +209,7 @@ def adjust_selector_visibility(selected_year, data_type):
     for el in selectors:
         if el.id == f"{data_type}_selector_all":
             continue  # skip the "all" selector
+        el.classList.remove('active')
         if el.classList.contains('visible'):
             if not is_flipped:
                 de_selection_list.append(el)
@@ -218,6 +219,7 @@ def adjust_selector_visibility(selected_year, data_type):
     if not is_flipped:
         selected_selector.classList.remove('d-none')
     selected_selector.classList.add('visible')
+    selected_selector.classList.add('active')
     selection_list = []
     if selected_idx == 0:
         selection_list = [selectors[1], selectors[2]]
@@ -234,11 +236,13 @@ def adjust_selector_visibility(selected_year, data_type):
         aio.run(selector_animation(fade_outs, fade_ins))
 
 
-def register_selector(container, year, data_type, color_scheme, visible, enabled):
+def register_selector(container, year, data_type, visible, enabled, active):
     selector = document.createElement("a")
     selector.id = f"{data_type}_selector_{year}"
     selector.href = f"#{data_type}"
-    selector.className = f"selector btn {color_scheme} rounded-pill scrollto"
+    selector.className = "selector btn rounded-pill scrollto"
+    if active:
+        selector.classList.add('active')
     if visible:
         selector.classList.add('visible')
     else:
@@ -262,17 +266,20 @@ if team:
         for idx, year in enumerate(range(current_year+1, 2021, -1)):
             result = await window.fetch(f"/dist/res/templates/years/{year}/team.html")
             exists = result.status == 200
+            active = False
 
             if exists:
                 insert_element(await result.text(), container, -1)
 
                 if not enabled:  # show only the first queried year
                     enabled = True
+                    active = True
                     document.getElementById('team_'+str(year)).classList.remove('d-none')
+                    scroll_to(window.location.hash)
                     window.AOS.init()
                     window.AOS.refresh()
 
-            register_selector(selector_container, year, "team", "btn-warning", idx < 3, exists)
+            register_selector(selector_container, year, "team", idx < 3, exists, active)
 
     aio.run(add_team_history())
 
@@ -289,12 +296,14 @@ if programs:
         for idx, year in enumerate(range(current_year+1, 2021, -1)):
             result = await window.fetch(f"/dist/res/templates/years/{year}/programs.html")
             exists = result.status == 200
+            active = False
 
             if exists:
                 insert_element(await result.text(), container, -1)
 
                 if not enabled:  # show only the first queried year
                     enabled = True
+                    active = True
                     document.getElementById('programs_'+str(year)).classList.remove('d-none')
                     images = document.select('img')
 
@@ -303,12 +312,12 @@ if programs:
                             images.append(img)
                         await aio.sleep(0.001)
 
-                    enable_isotope()
+                    scroll_to(window.location.hash)
                     window.AOS.init()
                     window.AOS.refresh()
                     setup_programs_filter()
 
-            register_selector(selector_container, year, "programs", "btn-success", idx < 3, exists)
+            register_selector(selector_container, year, "programs", idx < 3, exists, active)
             #TODO: Fix the selector visibility
 
     aio.run(add_programs_history())
