@@ -11,22 +11,17 @@ window.AOS.init()
 ########################################################################################################################
 # Programs List
 ########################################################################################################################
-def enable_isotope():
-    if hasattr(window, "programs_isotope") and window.programs_isotope:
-        window.programs_isotope.destroy()
-
-    visible_sections = document.querySelectorAll('.container:not(.d-none)')
-    for section in visible_sections:
-        if section.id.startswith("programs_"):
-            container = section.getElementsByClassName("programs-container")[0]
-            if container:
-                # Isotope 새로 초기화
-                window.programs_isotope = window.Isotope.new(container, {
-                    'itemSelector': ".programs-item",
-                    'layoutMode': "masonry"
-                })
-                window.AOS.refresh()
-                break
+def enable_isotope(selected_container=None):
+    if selected_container:
+        programs_container = selected_container
+    else:
+        programs_container = document.getElementById('programs_container')
+    if programs_container:
+        window.programs_isotope = window.Isotope.new(programs_container, {
+            'itemSelector': ".programs-item",
+            'layoutMode': "masonry"
+        })
+        window.AOS.refresh()
 
 
 def flag_selected_tag(selected):
@@ -53,17 +48,17 @@ def change_filter(event):
         flag_selected_tag(event.currentTarget)
 
 
-def setup_programs_filter():
-    visible_sections = document.querySelectorAll('.container:not(.d-none)')
-    for section in visible_sections:
-        if section.id.startswith("programs_"):
-            filter_elem = section.getElementsByClassName("programs-filter")[0]
-            if not filter_elem:
-                return
-
-            buttons = filter_elem.children
-            for el in buttons + list(section.getElementsByClassName('program-type')):
-                el.onclick = change_filter
+def setup_programs_filter(selected_container=None):
+    enable_isotope(selected_container)
+    if selected_container:
+        programs_filter_elem = selected_container.parentNode.querySelector('#programs_filter')
+    else:
+        programs_filter_elem = document.getElementById('programs_filter')
+    if programs_filter_elem:
+        for el in programs_filter_elem.children:
+            el.onclick = change_filter
+    for el in document.getElementsByClassName('program-type'):
+        el.onclick = change_filter
 
 
 ########################################################################################################################
@@ -76,56 +71,23 @@ def change_year_visibility(e):
     data_type, year = e.currentTarget.id.split("_selector_")
     for el in document.querySelectorAll(f'[id^="{data_type}_"]'):
         if "_selector_" in el.id:
-            continue
-        id_parts = el.id.split("_")
-        if len(id_parts) != 2:
-            continue
-        if not id_parts[1].isdigit():
-            continue
-        el.classList.add('d-none')
-
-    section = document.getElementById(f'{data_type}_{year}')
-    section.classList.remove('d-none')
-
-    adjust_selector_visibility(year, data_type)
-
+            continue  # skip selector elements
+        if not el.classList.contains('d-none'):
+            el.classList.add('d-none')
+    document.getElementById(f'{data_type}_'+str(year)).classList.remove('d-none')
     if data_type == "programs":
-        container = section.getElementsByClassName("programs-container")[0]
-        images = container.getElementsByTagName("img")
-        total = len(images)
-
-        async def wait_and_initialize():
-            if total == 0:
-                enable_isotope()
-                setup_programs_filter()
-                await aio.sleep(0.05)
-                window.AOS.init()
-                window.AOS.refresh()
-                return
-
-            futures = []
-            for img in images:
-                future = aio.Future()
-                def resolve(_=None, fut=future):
-                    fut.set_result(True)
-                if img.complete:
-                    resolve()
-                else:
-                    img.onload = resolve
-                futures.append(future)
-
-            await aio.gather(*futures)
-            enable_isotope()
-            setup_programs_filter()
-            await aio.sleep(0.05)
-            window.AOS.init()
-            window.AOS.refresh()
-
-        aio.run(wait_and_initialize())
-
-    else:
-        window.AOS.init()
-        window.AOS.refresh()
+        container_elem = document[f"{data_type}_{year}"]
+        programs_filter = container_elem.querySelector('#programs_filter')
+        programs_container = container_elem.querySelector('#programs_container')
+        if programs_filter:
+            programs_filter.classList.remove('d-none')
+        if programs_container:
+            programs_container.classList.remove('d-none')
+    adjust_selector_visibility(year, data_type)
+    window.AOS.init()
+    window.AOS.refresh()
+    if data_type == "programs":
+        setup_programs_filter(programs_container)
 
 
 def flip_year_visibility(e):
@@ -322,6 +284,5 @@ if programs:
                     setup_programs_filter()
 
             register_selector(selector_container, year, "programs", idx < 3, exists, active)
-            #TODO: Fix the selector visibility
 
     aio.run(add_programs_history())
